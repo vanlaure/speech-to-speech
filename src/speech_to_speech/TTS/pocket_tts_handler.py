@@ -14,6 +14,7 @@ from speech_to_speech.pipeline.handler_types import TTSIn, TTSOut
 from speech_to_speech.pipeline.messages import AUDIO_RESPONSE_DONE, EndOfResponse
 from speech_to_speech.pipeline.speculative_turns import SpeculativeTurnTracker
 from speech_to_speech.pipeline.transcript_logging import transcript_for_log
+from speech_to_speech.TTS import pronunciations
 
 logger = logging.getLogger(__name__)
 console = Console()
@@ -128,6 +129,9 @@ class PocketTTSHandler(BaseHandler[TTSIn, TTSOut]):
 
         console.print(f"[green]ASSISTANT: {text}")
 
+        # Respell for the synthesiser only (see TTS/pronunciations.py); the transcript keeps `text`.
+        spoken_text = pronunciations.apply(text)
+
         # Generate audio stream
         logger.debug("Generating audio: %s", transcript_for_log(text))
 
@@ -159,7 +163,7 @@ class PocketTTSHandler(BaseHandler[TTSIn, TTSOut]):
 
         for audio_chunk in self.model.generate_audio_stream(
             self.voice_state,
-            text,
+            spoken_text,
             max_tokens=self.max_tokens,
             copy_state=True,  # Don't modify the original voice state
         ):
